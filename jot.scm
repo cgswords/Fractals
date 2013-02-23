@@ -111,13 +111,29 @@
 (define dec2bin
   (lambda (n)
     (cond
-      [(< n 2) (list n)]
+      [(< n 1) (list 0)]
+      [(< n 2) (list 1)]
       [(zero? (mod n 2)) (cons 0 (dec2bin (/ n 2)))]
       [else (cons 1 (dec2bin (/ (sub1 n) 2)))])))
 
 (define binstrapp
   (lambda (x y)
     (append (reverse (dec2bin x)) (reverse (dec2bin y)))))
+
+(define binstrapp2
+  (lambda (x y)
+    (if (> x y) 
+      (append (reverse (dec2bin x)) (reverse (dec2bin y)))
+      (append (reverse (dec2bin x)) (reverse (dec2bin (- y x)))))))
+
+(define binstrapp3
+  (lambda (x y)
+    (if (> x y) 
+      (append (dec2bin x) (dec2bin y))
+      (append (dec2bin (- y x)) (dec2bin x)))))
+
+(define dist
+  (lambda (x y) (reverse (dec2bin (floor (sqrt (+ (* x x) (* y y)))))))) 
 
 (define numxor
   (lambda (x y)
@@ -178,6 +194,18 @@
   (lambda (x y)
     (map-with-1s numand (reverse (dec2bin x)) (reverse (dec2bin y)))))
 
+(define bitsum
+  (lambda (x y) (reverse (dec2bin (+ x y)))))
+
+(define bitmax
+  (lambda (x y) (reverse (dec2bin (max x y)))))
+
+(define bitprod
+  (lambda (x y) (reverse (dec2bin (* x y)))))
+
+(define bitprod2
+  (lambda (x y) (dec2bin (* x y))))
+
 (define bitshiftz
   (lambda (x y)
     (append (getnof y 0) (reverse (dec2bin x)))))
@@ -204,15 +232,55 @@
           (number->string green) " " 
           (number->string blue))))))
 
+(define color-lookup
+  (lambda (n env)
+    (cond
+      [(null? env) '(0 0 0)]
+      [(and (>= n (caaar env)) (<= n (cdaar env))) (cdar env)]
+      [else (color-lookup n (cdr env))])))
+
+(define color-1
+  '(
+    ((  0 .  25) . (80 80 255))
+    ((  6 .  10) . (40 40 20))
+    (( 11 .  15) . (0 0 0))
+    (( 16 .  25) . (30 30 80))
+    (( 26 .  30) . (0 0 200))
+    (( 31 .  35) . (80 80 80))
+    (( 36 .  40) . (60 40 160))
+    (( 41 .  50) . (5 5 5))
+    (( 51 .  75) . (0 0 100))
+    (( 76 . 100) . (30 30 30))
+    ((101 . 125) . (150 150 150))
+    ((126 . 150) . (100 0 80))
+    ((151 . 175) . (10 0 255))
+    ((176 . 200) . (40 40 40))
+    ((201 . 225) . (40 40 255))
+    ((226 . 255) . (30 30 0))
+  ))
+  
+
 (define rbcolors3
   (lambda (x y)
-    (let ((l1val (val (jot (binstrando x y))))
-          (l2val (val (jot (binstrandz x y)))))
-      (let ((red   (min 255 (+ l1val l2val)))
-            (green (min 255 (abs (- l1val l2val))))
-            (blue  (min 255 (mod l1val (add1 l2val)))))
+    (let ((v1 (val (jot (binstrapp x y))))
+          (v2 (val (jot (bitshiftz x y)))))
+      (let ((red   (min 255 (mod v1 (add1 v2))))
+            (green (min 255 (mod v2 (add1 v1))))
+            (blue  (min 255 (max x y))))
         (string-append 
           (number->string red) " " 
           (number->string green) " " 
           (number->string blue))))))
 
+(define color-set
+  (lambda (color-fun colorenv)
+    (lambda (x y)
+      (let* ((v (abs (- (+ (val (jot (color-fun x y))) x) y)))
+             (v (val (jot (color-fun x y))))
+             (colors (color-lookup v colorenv)))
+        (pmatch colors
+          [(,red ,green ,blue) 
+           (string-append 
+             (number->string red) " " 
+             (number->string green) " " 
+             (number->string blue))])))))
