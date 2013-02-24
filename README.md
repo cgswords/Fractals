@@ -1,10 +1,12 @@
-JotFractals
+Fractals
 ===========
 
-A scheme script for producing fractals using jot as the iterator for values of points.
+A scheme script for producing fractals using different values
 
-How To Generate Things
+Jot Fractals
 ======================
+
+This uses Jot as the iterator for point coloring.
 
     > (load "jot.scm")
     > (runjot "1000-bsa.ppm" binstrapp 1000 150)
